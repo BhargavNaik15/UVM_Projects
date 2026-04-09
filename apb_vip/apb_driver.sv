@@ -5,8 +5,7 @@ class apb_driver extends uvm_driver#(apb_seq_item);
   apb_seq_item transaction;
   virtual apb_interface apb_vif;
   
-  logic [31:0] rdata;
-  shortint wait_state_counter;
+  shortint wait_state_counter; // A variable to keep track of number of wait states after PENABLE is driven HIGH by Master
   
   function new(string path = "uvm_driver", uvm_component parent = null);
     super.new(path, parent);
