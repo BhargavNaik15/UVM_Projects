@@ -5,7 +5,7 @@ class apb_driver extends uvm_driver#(apb_seq_item);
   apb_seq_item transaction;
   virtual apb_interface apb_vif;
   
-  shortint wait_state_counter; // A variable to keep track of number of wait states after PENABLE is driven HIGH by Master
+  shortint wait_state_counter;
   
   function new(string path = "uvm_driver", uvm_component parent = null);
     super.new(path, parent);
@@ -16,7 +16,7 @@ class apb_driver extends uvm_driver#(apb_seq_item);
     
     // Accessing the interface from config db, using get method
     if (!uvm_config_db#(virtual apb_interface) ::get(this, "", "apb_vif", apb_vif))
-      `uvm_error("DRV", "Failed to retrieve interface from config db");
+      `uvm_fatal("DRV", "Failed to retrieve interface from config db");
   endfunction
   
   // ----------------------------------------
@@ -83,17 +83,15 @@ class apb_driver extends uvm_driver#(apb_seq_item);
     apb_vif.PENABLE <= 0;
   endtask
   
-//   Different way to handle the reset phase
-//   virtual task reset_phase(uvm_phase phase);
-//     @(posedge apb_vif.PCLK);
-//     apb_vif.PSEL    <= 0;
-//     apb_vif.PENABLE <= 0;
-//     apb_vif.PADDR   <= 32'h00;
-//     apb_vif.PWDATA  <= 32'h00;
-//     apb_vif.PWRITE  <= 0;
-//   endtask
-  
   virtual task run_phase(uvm_phase phase);
+    // Initialize to idle
+    apb_vif.PSEL    <= 0;
+    apb_vif.PENABLE <= 0;
+    apb_vif.PWRITE  <= 0;
+    apb_vif.PADDR   <= 0;
+    apb_vif.PWDATA  <= 0;
+    apb_vif.PSTRB   <= 0;
+    @(posedge apb_vif.PRESETn); // wait for reset before starting
     
     forever begin
       seq_item_port.get_next_item(transaction);

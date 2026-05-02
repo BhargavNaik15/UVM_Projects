@@ -31,34 +31,28 @@ class apb_monitor extends uvm_monitor;
         if (apb_vif.PSEL) begin
           transaction.addr      = apb_vif.PADDR;
           transaction.data      = apb_vif.PWDATA;
-          transaction.rw        = apb_vif.PWRITE;
+          transaction.rw        = apb_txn_type_e'(apb_vif.PWRITE);
           
           @(posedge apb_vif.PCLK);
           if (apb_vif.PENABLE) begin
             do
               @(posedge apb_vif.PCLK);
             while (!apb_vif.PREADY);
-            
-            transaction.pslverr   = apb_vif.PSLVERR;
-        	transaction.read_data = apb_vif.PRDATA;
-            send.write(transaction);
-            `uvm_info("MON", $sformatf("Data send to Scoreboard PADDR = %0h, PWDATA = %0h, PWRITE = %0h, PRDATA = %0h, PSLVERR = %0h", transaction.addr, transaction.data, transaction.rw, transaction.pslverr, transaction.read_data), UVM_NONE)
           end
           else begin
             // Wait for PENABLE if not already high
             if (!apb_vif.PENABLE)
               @(posedge apb_vif.PCLK iff apb_vif.PENABLE);
 
-            // Now wait for completion regardless of path taken
+            // Now wait for completion of the ACCESS phase 
             do
               @(posedge apb_vif.PCLK);
             while (!(apb_vif.PSEL && apb_vif.PENABLE && apb_vif.PREADY));
-
-            transaction.pslverr   = apb_vif.PSLVERR;
-            transaction.read_data = apb_vif.PRDATA;
-            send.write(transaction);
-            `uvm_info("MON", $sformatf("Data send to Scoreboard PADDR = %0h, PWDATA = %0h, PWRITE = %0h, PRDATA = %0h, PSLVERR = %0h", transaction.addr, transaction.data, transaction.rw, transaction.pslverr, transaction.read_data), UVM_NONE)
           end
+          transaction.pslverr   = apb_vif.PSLVERR;
+          transaction.read_data = apb_vif.PRDATA;
+          send.write(transaction);
+          `uvm_info("MON", $sformatf("Data send to Scoreboard PADDR = %0h, PWDATA = %0h, PWRITE = %0h, PRDATA = %0h, PSLVERR = %0h", transaction.addr, transaction.data, transaction.rw, transaction.pslverr, transaction.read_data), UVM_NONE)
         end
       end
     end
